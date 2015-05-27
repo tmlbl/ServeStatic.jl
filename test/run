@@ -1,0 +1,10 @@
+#!/bin/bash
+
+SERVER_PID=0;
+
+julia test/server.jl &
+	SERVER_PID=$!;
+
+julia test/test.jl;
+
+kill -9 $SERVER_PID;
