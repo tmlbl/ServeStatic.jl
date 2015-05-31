@@ -1,8 +1,9 @@
-## A static file http server, based on express connect
+## Static server from Meddle.jl, extended to serve index.html on a request to root
 
 using URIParser: parse_url
 using Meddle
 using HttpServer
+using HttpCommon: FileResponse
 
 export ServeStatic
 
@@ -20,20 +21,23 @@ function ServeStatic(root::String)
     m = match(r"^/+(.*)$", req.state[:resource])
     if m != nothing
       path = normpath(root, m.captures[1])
-#     # Protect against dir-escaping
+      # Protect against dir-escaping
       if !path_in_dir(path, root)
         return respond(req, Response(400)) # Bad Request
       end
       path = strip_trailing_slash(path)
       # Serve the requested file, if it exists
       if isfile(path)
-        res.data = readall(path)
-        return respond(req, res)
+        # res.data = readall(path)
+        return respond(req, FileResponse(path))
       end
       # Serve index.html if a request is made to the root
       if (path == normpath(root))
-        res.data = readall(path * "/index.html")
-        return respond(req, res)
+        ixpath = path * "/index.html"
+        if isfile(ixpath)
+          res = FileResponse(ixpath)
+          return respond(req, res)
+        end
       end
       req, res
     end
